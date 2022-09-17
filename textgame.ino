@@ -17,6 +17,7 @@ bool restartScreen = false;
 String enemy;
 String player;
 
+
 void setup() {
   lcd.begin(16, 2);
   pinMode(startPin, INPUT);
@@ -39,12 +40,8 @@ void loop() {
   bottomPos = 15;
   score = 0;
   top = true;
-  halfway = false;
-  lcd.clear();
-  lcd.setCursor(0,0);
-  lcd.print("Hold the start");
-  lcd.setCursor(0,1);
-  lcd.print("button to begin"); 
+  halfway = false; 
+  screenWrite("Hold the start", "button to begin");
   
   //Start the game if the right-side button is pressed
   if(digitalRead(startPin) == HIGH){
@@ -69,11 +66,7 @@ void loop() {
      if(topPos == -1){
       topPos = 15;
       if(top){
-        lcd.clear();
-        lcd.setCursor(0,0);
-        lcd.print("Game over!");
-        lcd.setCursor(0,1);
-        lcd.print("Score: ");
+        screenWrite("Game over!", "Score: ");
         lcd.print(score);
         failed = true;
         while(failed){
@@ -93,11 +86,7 @@ void loop() {
      if(bottomPos == -1){
       bottomPos = 15;
       if(!top){
-        lcd.clear();
-        lcd.setCursor(0,0);
-        lcd.print("Game over!");
-        lcd.setCursor(0,1);
-        lcd.print("Score: ");
+        screenWrite("Game over!", "Score: ");
         lcd.print(score);
         failed = true;
         while(failed){
@@ -114,11 +103,7 @@ void loop() {
      }
 
      while(restartScreen){
-      lcd.clear();
-      lcd.setCursor(0,0);
-      lcd.print("Press start to");
-      lcd.setCursor(0,1);
-      lcd.print("play again");
+      screenWrite("Press start to", "play again");
       while(restartScreen){
         startState = digitalRead(startPin);
         if(startState == HIGH){
@@ -136,6 +121,14 @@ void loop() {
   }
 }
 delay(1000);
+}
+
+void screenWrite(String firstline, String secondline) {
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print(firstline);
+  lcd.setCursor(0,1);
+  lcd.print(secondline);
 }
 
 void move_ISR(){
