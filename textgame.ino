@@ -2,6 +2,8 @@
 LiquidCrystal lcd(12, 11, 5, 4, 3, 8);
 const int startPin = 6;
 const int movePin = 2;
+const int speedPin = A0;
+
 int startState = 0;
 int prevStartState = 0;
 int moveState = 0;
@@ -13,6 +15,8 @@ bool top = true;
 int score = 0;
 bool failed = false;
 bool restartScreen = false;
+int speedVal = 0;
+int convertedSpeed = 0;
 
 //screen data
 String enemy;
@@ -29,8 +33,10 @@ int gameSpeed = 2;
 
 void setup() {
   lcd.begin(16, 2);
+  //Serial.begin(9600);
   pinMode(startPin, INPUT);
   pinMode(movePin, INPUT);
+  pinMode(speedPin, INPUT);
   enemy = "*";
   player = ">";
   //attachInterrupt(digitalPinToInterrupt(2), move_ISR, RISING);
@@ -38,11 +44,8 @@ void setup() {
 
 void loop() {
   // Setup
-  //lcd.begin(16, 2);
-  //pinMode(switchPin, INPUT);
-  //pinMode(movePin, INPUT);
-  //enemy = "*";
-  //player = ">";
+  //speedVal = analogRead(speedPin);
+  //Serial.println(speedVal);
   failed = false;
   restartScreen = false;
   topPos = 15;
@@ -51,26 +54,13 @@ void loop() {
   top = true;
   halfway = false; 
   screenWrite("Hold the start", "button to begin");
-  moveState = digitalRead(movePin);
-  if(moveState != prevMoveState){
-    if(moveState == LOW and gameSpeed == 3){
-      screenWrite("Game speed:", "Slow");
-      updateDelay = 750;
-      gameSpeed = 1;
-    } else if(moveState == LOW and gameSpeed == 1){
-      screenWrite("Game speed:", "Medium");
-      updateDelay = 350;
-      gameSpeed = 2;
-      } else{
-        screenWrite("Game speed:", "Fast");
-        updateDelay = 75;
-        gameSpeed = 3;
-    }
-    prevMoveState = moveState;
-  }
+  speedVal = analogRead(speedPin);
+  convertedSpeed = map(speedVal, 0, 1023, 33, 750);
+  //screenWrite("Speed is:", String(convertedSpeed));
   
   //Start the game if the right-side button is pressed
   if(digitalRead(startPin) == HIGH){
+    updateDelay = convertedSpeed;
     lcd.clear();
     lcd.setCursor(0,0);
     lcd.print(player);
