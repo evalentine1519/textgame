@@ -5,7 +5,7 @@ const int movePin = 2;
 int startState = 0;
 int prevStartState = 0;
 int moveState = 0;
-int prevMoveState = 0;
+int prevMoveState = HIGH;
 bool halfway = false;
 int topPos = 15;
 int bottomPos = 15;
@@ -14,8 +14,17 @@ int score = 0;
 bool failed = false;
 bool restartScreen = false;
 
+//screen data
 String enemy;
 String player;
+
+//counters
+unsigned long lastDebounceTime = 0;
+unsigned long debounceDelay = 50;
+unsigned long updateDelay = 333;
+unsigned long lastUpdateTop = 0;
+unsigned long lastUpdateBottom = 0;
+int gameSpeed = 2;
 
 
 void setup() {
@@ -24,7 +33,7 @@ void setup() {
   pinMode(movePin, INPUT);
   enemy = "*";
   player = ">";
-  attachInterrupt(digitalPinToInterrupt(2), move_ISR, RISING);
+  //attachInterrupt(digitalPinToInterrupt(2), move_ISR, RISING);
 }
 
 void loop() {
@@ -42,24 +51,52 @@ void loop() {
   top = true;
   halfway = false; 
   screenWrite("Hold the start", "button to begin");
+  moveState = digitalRead(movePin);
+  if(moveState != prevMoveState){
+    if(moveState == LOW and gameSpeed == 3){
+      screenWrite("Game speed:", "Slow");
+      updateDelay = 750;
+      gameSpeed = 1;
+    } else if(moveState == LOW and gameSpeed == 1){
+      screenWrite("Game speed:", "Medium");
+      updateDelay = 350;
+      gameSpeed = 2;
+      } else{
+        screenWrite("Game speed:", "Fast");
+        updateDelay = 75;
+        gameSpeed = 3;
+    }
+    prevMoveState = moveState;
+  }
   
   //Start the game if the right-side button is pressed
   if(digitalRead(startPin) == HIGH){
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print(player);
+    prevMoveState = LOW;
   while (!failed){
-     lcd.clear();
-     if(top == true){
-       lcd.setCursor(0,0);
-     } else{
-       lcd.setCursor(0,1);
-     }  
-     lcd.print(player);
-     lcd.setCursor(topPos,0);
-     lcd.print(enemy);
-     topPos--;
+    moveState = digitalRead(movePin);
+    if(moveState != prevMoveState){
+      if(moveState == LOW){
+        top = !top;
+        characterUpdate(topPos, bottomPos, top);
+      }
+      prevMoveState = moveState;
+    }
+     if((millis() - lastUpdateTop) > updateDelay){
+        characterUpdate(topPos, bottomPos, top);
+        
+        
+        topPos--;
+        lastUpdateTop = millis();
+     }
      if(halfway == true) {
-      lcd.setCursor(bottomPos, 1);
-      lcd.print(enemy);
-      bottomPos--;
+      if((millis() - lastUpdateBottom) > updateDelay){
+         characterUpdate(topPos, bottomPos, top);
+         bottomPos--;
+         lastUpdateBottom = millis();
+      }
      }
 
      //check if top has reached the end (add collision detection later)
@@ -117,7 +154,6 @@ void loop() {
       halfway = true;
      }
 
-     delay(333);
   }
 }
 delay(1000);
@@ -131,7 +167,26 @@ void screenWrite(String firstline, String secondline) {
   lcd.print(secondline);
 }
 
-void move_ISR(){
+void characterUpdate(int topPos, int bottomPos, bool top) {
+  lcd.clear();
+  if(top){
+    lcd.setCursor(0,0);
+    lcd.print(player);
+  } else{
+    lcd.setCursor(0,1);
+    lcd.print(player);
+  }
+
+  lcd.setCursor(topPos, 0);
+  lcd.print(enemy);
+  if(halfway){
+    lcd.setCursor(bottomPos, 1);
+    lcd.print(enemy);
+  }
+  
+}
+
+void movePlayer(){
   top = !top;
   lcd.clear();
   if(top == true){
@@ -146,5 +201,5 @@ void move_ISR(){
   lcd.setCursor(bottomPos, 1);
   lcd.print(enemy);
   }
-  delay(15);
+  delay(5);
 }
